@@ -1,4 +1,0 @@
-MCMC log — JALISCO_2025-08-18_2026-06-15-trimmed-RICH-flag1-4-fixI0-1-method-3-dist-3-tstart-1-tend-1-step-1-calibrationperiod-40-Measles-cases — window 1 — 2026-07-07 22:33:58
-Model: RICH (flag1=4) | method1=3 dist1=3
-Chains: 4/4 OK | Iterations/chain: 5000 | Draws kept: 300 | Acceptance rate: 6.9% | Elapsed: 8.2s | Horizon: 1
-Max R-hat: 20.118 [NOT CONVERGED] (threshold 1.10)

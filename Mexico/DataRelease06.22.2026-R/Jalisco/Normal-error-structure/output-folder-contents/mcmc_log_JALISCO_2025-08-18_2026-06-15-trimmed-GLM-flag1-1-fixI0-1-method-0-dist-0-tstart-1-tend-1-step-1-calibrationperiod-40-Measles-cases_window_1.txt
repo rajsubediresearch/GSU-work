@@ -1,4 +1,0 @@
-MCMC log — JALISCO_2025-08-18_2026-06-15-trimmed-GLM-flag1-1-fixI0-1-method-0-dist-0-tstart-1-tend-1-step-1-calibrationperiod-40-Measles-cases — window 1 — 2026-07-07 22:23:38
-Model: GLM (flag1=1) | method1=0 dist1=0
-Chains: 4/4 OK | Iterations/chain: 5000 | Draws kept: 300 | Acceptance rate: 0.3% | Elapsed: 4.3s | Horizon: 1
-Max R-hat: 1.561 [NOT CONVERGED] (threshold 1.10)

@@ -1,4 +1,0 @@
-MCMC log — CIUDAD_DE_MEXICO_2025-08-04_2026-06-29-trimmed-RICH-flag1-4-fixI0-1-method-0-dist-0-tstart-1-tend-1-step-1-calibrationperiod-29-Measles-cases — window 1 — 2026-07-07 22:12:38
-Model: RICH (flag1=4) | method1=0 dist1=0
-Chains: 4/4 OK | Iterations/chain: 5000 | Draws kept: 300 | Acceptance rate: 10.2% | Elapsed: 4.8s | Horizon: 3
-Max R-hat: 1.026 [CONVERGED] (threshold 1.10)
