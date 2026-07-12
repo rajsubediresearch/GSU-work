@@ -1,0 +1,158 @@
+
+% options_forecast.m — GrowthPredict
+% Put this file in your working directory (same level as ./input and ./output).
+% The GrowthPredict user function Run_Forecasting_GrowthModels.m reads these
+% variables from the workspace.
+
+% <============================================================================>
+% < Author: Gerardo Chowell  ==================================================>
+% <============================================================================>
+
+function [cadfilename1, caddisease, datatype, dist1, numstartpoints, B, flag1, model_name1, fixI0, getperformance, forecastingperiod, windowsize1, tstart1, tend1] = options_forecast
+
+% OPTIONS_FORECAST  GrowthPredict options for forecasting with growth models
+%
+% Overview
+%   Returns configuration to (i) calibrate the chosen growth model on rolling
+%   windows and (ii) generate out-of-sample forecasts with quantified uncertainty.
+%
+% Usage
+%   [cadfilename1, caddisease, datatype, dist1, numstartpoints, B, ...
+%    flag1, model_name1, fixI0, getperformance, forecastingperiod, ...
+%    windowsize1, tstart1, tend1] = options_forecast;
+%
+% Returns
+%   cadfilename1      char     Base name of the input file in ./input ('<cadfilename1>.txt')
+%   caddisease        char     Disease/subject label for outputs
+%   datatype          char     Data tag (e.g., 'cases' | 'deaths' | 'hospitalizations')
+%   dist1             int      Error model (see mapping below)
+%   numstartpoints    int      MultiStart initial points for global search
+%   B                 int      Bootstrap replicates for uncertainty
+%   flag1             int      Growth-model code (see “Growth model choices”)
+%   model_name1       char     Human-readable model name matching flag1
+%   fixI0             logical  1=fix initial observed value; 0=estimate it
+%   getperformance    logical  1=compute forecast performance metrics; 0=skip
+%   forecastingperiod int      Forecast horizon (steps ahead)
+%   windowsize1       int      Rolling-window length (time steps)
+%   tstart1           int      Start index of the first rolling window
+%   tend1             int      End index of the first rolling window
+%
+% Input data (./input)
+%   Text file '<cadfilename1>.txt' with two columns, NO header:
+%     Col 1: time index  (0,1,2,...)
+%     Col 2: observed incidence (nonnegative)
+%   If the series is cumulative, the filename MUST start with 'cumulative-'.
+%
+% Estimation & error models
+%   The global 'method1' selects the estimator; 'dist1' sets/weights the observation model.
+%     method1 = 0  LSQ with dist1 ∈ {0,1,2} as weighting (Normal / Poisson-like / NegBin-like)
+%     method1 = 1  MLE Poisson                          → dist1 := 1 (automatic)
+%     method1 = 3  MLE NegBin: var = mean + α·mean      → dist1 := 3 (automatic)
+%     method1 = 4  MLE NegBin: var = mean + α·mean^2    → dist1 := 4 (automatic)
+%     method1 = 5  MLE NegBin: var = mean + α·mean^d    → dist1 := 5 (automatic)
+%
+% Growth model choices (flag1)
+%   EXP=-1, GGM=0, GLM=1, GRM=2, LM=3, RICH=4, GOM=5.  Set model_name1 accordingly (e.g., 'GLM').
+%
+% Notes
+%   • Choose forecastingperiod to match your application (e.g., 4 weeks if weekly data).
+%   • getperformance=1 writes forecast accuracy metrics to ./output (if implemented).
+%   • Keep file/disease labels ASCII if you need cross-platform filename compatibility.
+
+
+% <============================================================================>
+% <=================== Declare Global Variables ==============================>
+% <============================================================================>
+% Global variable used to define the parameter estimation method.
+global method1; % Parameter estimation method
+
+% <============================================================================>
+% <========================= Dataset Properties ==============================>
+% <============================================================================>
+% The time series data file contains the incidence curve of interest (e.g., new cases per unit of time).
+% - The first column corresponds to the time index (e.g., 0, 1, 2, ...).
+% - The second column contains the temporal incidence data.
+% Note:
+% - If the file contains cumulative incidence data, its name must start with "cumulative".
+
+cadfilename1 = 'CIUDAD_DE_MEXICO_2025-08-04_2026-06-29-trimmed'; % Name of the time-series data file
+caddisease = 'measles';                            % Name of the disease or subject related to the data
+datatype = 'cases';                             % Type of data (e.g., cases, deaths, hospitalizations)
+
+% <============================================================================>
+% <======================= Parameter Estimation ==============================>
+% <============================================================================>
+% Estimation method options:
+% 0 - Nonlinear least squares (LSQ)
+% 1 - Maximum Likelihood Estimation (MLE) Poisson
+% 3 - MLE Negative Binomial (VAR = mean + alpha*mean)
+% 4 - MLE Negative Binomial (VAR = mean + alpha*mean^2)
+% 5 - MLE Negative Binomial (VAR = mean + alpha*mean^d)
+
+method1 = 3; % Default estimation method: Nonlinear least squares (LSQ)
+
+% Error structure options based on method1:
+% 0 - Normal distribution (method1 = 0)
+% 1 - Poisson error structure (method1 = 0 or 1)
+% 2 - Negative Binomial (VAR = factor1 * mean, empirically estimated)
+% 3 - MLE Negative Binomial (VAR = mean + alpha*mean)
+% 4 - MLE Negative Binomial (VAR = mean + alpha*mean^2)
+% 5 - MLE Negative Binomial (VAR = mean + alpha*mean^d)
+
+dist1 = 3; % Default error structure: Normal distribution
+switch method1
+    case 1
+        dist1 = 1; % Poisson error structure
+    case 3
+        dist1 = 3; % Negative Binomial (VAR = mean + alpha*mean)
+    case 4
+        dist1 = 4; % Negative Binomial (VAR = mean + alpha*mean^2)
+    case 5
+        dist1 = 5; % Negative Binomial (VAR = mean + alpha*mean^d)
+end
+
+% Optimization settings:
+numstartpoints = 25; % Number of initial guesses for global optimization (Multistart)
+B = 300;             % Number of bootstrap realizations for parameter uncertainty characterization
+
+% <============================================================================>
+% <========================== Growth Model ===================================>
+% <============================================================================>
+% Growth model options:
+% -1: Exponential growth (EXP)
+%  0: Generalized Growth Model (GGM)
+%  1: Logistic Model (GLM)
+%  2: Generalized Richards Model (GRM)
+%  3: Linear Model (LM)
+%  4: Richards Model (RICH)
+%  5: Gompertz Model (GOM)
+
+EXP = -1;  GGM = 0;  GLM = 1;  GRM = 2;  LM = 3;  RICH = 4;  GOM = 5;
+
+flag1 = GLM;         % Selected growth model
+model_name1 = 'GLM'; % Name of the selected model
+fixI0 = 1;           % Boolean: Fix the initial value to the first data point (true) or estimate it (false)
+
+% <============================================================================>
+% <====================== Forecasting Parameters =============================>
+% <============================================================================>
+% Parameters for forecasting analysis:
+% - getperformance: Boolean to enable/disable forecasting performance metrics
+% - forecastingperiod: Time horizon for forecasting (number of time units ahead)
+
+getperformance = 1;    % Enable forecasting performance metrics (1 = yes, 0 = no)
+forecastingperiod =3; % Forecast horizon: Number of time units ahead
+
+% <============================================================================>
+% <======= Parameters for Rolling Window Analysis ===========================>
+% <============================================================================>
+% Parameters for rolling window analysis:
+% - windowsize1: Size of the moving window
+% - tstart1: Start time point for rolling window analysis
+% - tend1: End time point for rolling window analysis
+
+windowsize1 = 29; % Size of the rolling window (e.g., 10 time units)
+tstart1 = 1;      % Start time point for rolling window analysis
+tend1 = 1;        % End time point for rolling window analysis
+
+end
